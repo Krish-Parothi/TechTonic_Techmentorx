@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const PaymentPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Payment form state
     const [selectedMethod, setSelectedMethod] = useState('upi');
     const [upiId, setUpiId] = useState('');
     const [cardNumber, setCardNumber] = useState('');
@@ -10,29 +13,42 @@ const PaymentPage = () => {
     const [cardCvv, setCardCvv] = useState('');
     const [cardName, setCardName] = useState('');
 
-    // Mock booking data
-    const bookingData = {
-        from: 'Delhi',
-        to: 'Mumbai',
-        fromCode: 'DEL',
-        toCode: 'BOM',
-        departureDate: 'Mar 15, 2026',
-        returnDate: 'Mar 22, 2026',
-        duration: '7 days trip',
-        totalPrice: 3299,
-    };
+    // Get booking data from previous step or use fallback
+    // Persist booking data logic
+    const [bookingData] = useState(() => {
+        if (location.state?.bookingData) {
+            sessionStorage.setItem('paymentBookingData', JSON.stringify(location.state.bookingData));
+            return location.state.bookingData;
+        }
+        try {
+            const saved = sessionStorage.getItem('paymentBookingData');
+            if (saved) return JSON.parse(saved);
+        } catch (e) { }
+
+        // Fallback default
+        return {
+            from: 'Delhi',
+            to: 'Mumbai',
+            fromCode: 'DEL',
+            toCode: 'BOM',
+            departureDate: 'Mar 15, 2026',
+            returnDate: 'Mar 22, 2026',
+            duration: '7 days trip',
+            totalPrice: 3299,
+        };
+    });
 
     const handlePayment = () => {
         console.log('Processing payment...', { selectedMethod });
-        // Navigate to confirmation page
-        navigate('/booking-confirmed');
+        // Navigate to travel pass (ticket) page
+        navigate('/travel-pass', { state: { bookingData } });
     };
 
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="max-w-6xl mx-auto">
+            <header className="bg-white border-b border-gray-200 py-4">
+                <div className="w-full max-w-full mx-auto">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
@@ -47,7 +63,7 @@ const PaymentPage = () => {
             </header>
 
             {/* Main Content */}
-            <main className="max-w-6xl mx-auto px-6 py-8">
+            <main className="w-full max-w-full mx-auto px-4 py-8">
                 <div className="grid grid-cols-3 gap-6">
                     {/* Left Column - Payment Form */}
                     <div className="col-span-2">
@@ -69,8 +85,8 @@ const PaymentPage = () => {
                                 <button
                                     onClick={() => setSelectedMethod('upi')}
                                     className={`p-4 rounded-lg border-2 transition-all ${selectedMethod === 'upi'
-                                            ? 'border-blue-600 bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-blue-600 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,8 +98,8 @@ const PaymentPage = () => {
                                 <button
                                     onClick={() => setSelectedMethod('card')}
                                     className={`p-4 rounded-lg border-2 transition-all ${selectedMethod === 'card'
-                                            ? 'border-blue-600 bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-blue-600 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,8 +111,8 @@ const PaymentPage = () => {
                                 <button
                                     onClick={() => setSelectedMethod('netbanking')}
                                     className={`p-4 rounded-lg border-2 transition-all ${selectedMethod === 'netbanking'
-                                            ? 'border-blue-600 bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-blue-600 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

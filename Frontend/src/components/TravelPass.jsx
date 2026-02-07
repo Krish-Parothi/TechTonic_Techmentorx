@@ -1,40 +1,54 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const TravelPass = () => {
     const navigate = useNavigate();
-    const [selectedTrip, setSelectedTrip] = useState('delhi-mumbai');
+    const location = useLocation();
+    const [selectedTrip, setSelectedTrip] = useState('current');
+
+    // Get data from payment/booking or use fallback
+    // Get data from payment/booking or use fallback
+    const [passedData] = useState(() => {
+        if (location.state?.bookingData) {
+            sessionStorage.setItem('travelPassData', JSON.stringify(location.state.bookingData));
+            return location.state.bookingData;
+        }
+        try {
+            const saved = sessionStorage.getItem('travelPassData');
+            return saved ? JSON.parse(saved) : undefined;
+        } catch { return undefined; }
+    });
+
+    const travelPassData = {
+        bookingId: passedData?.bookingId || `BP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        from: passedData?.from || 'Delhi',
+        to: passedData?.to || 'Mumbai',
+        fromCode: passedData?.fromCode || 'DEL',
+        toCode: passedData?.toCode || 'BOM',
+        departureDate: passedData?.departureDate || 'Mar 15, 2026',
+        returnDate: passedData?.returnDate || 'Mar 22, 2026',
+        totalPaid: passedData?.totalPrice || 3299,
+        status: 'Upcoming',
+        departureIn: passedData?.duration ? 'Pending Check-in' : '36 days',
+        airportArrival: '2 hours before departure',
+        originAirport: passedData ? `${passedData.from} (${passedData.fromCode})` : 'Delhi (DEL)',
+    };
 
     const trips = [
         {
-            id: 'delhi-mumbai',
-            from: 'Delhi',
-            to: 'Mumbai',
-            date: 'Mar 15',
+            id: 'current',
+            from: travelPassData.from,
+            to: travelPassData.to,
+            date: travelPassData.departureDate,
             status: 'Upcoming',
         },
     ];
 
-    const travelPassData = {
-        bookingId: 'BP-I770458257184-2LF49GBZR',
-        from: 'Delhi',
-        to: 'Mumbai',
-        fromCode: 'DEL',
-        toCode: 'BOM',
-        departureDate: 'Sun, Mar 15, 2026',
-        returnDate: 'Sun, Mar 22, 2026',
-        totalPaid: 3299,
-        status: 'Upcoming',
-        departureIn: '36 days',
-        airportArrival: '2 hours before departure',
-        originAirport: 'Delhi (DEL)',
-    };
-
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="max-w-4xl mx-auto">
+            <header className="bg-white border-b border-gray-200 py-4">
+                <div className="w-full max-w-full mx-auto">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
@@ -55,7 +69,7 @@ const TravelPass = () => {
             </header>
 
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-6 py-8">
+            <main className="w-full max-w-full mx-auto px-4 py-8">
                 {/* Trip Selector */}
                 <div className="mb-6">
                     <h2 className="text-sm font-medium text-gray-700 mb-3">Your Travel Passes</h2>
@@ -64,9 +78,9 @@ const TravelPass = () => {
                             <button
                                 key={trip.id}
                                 onClick={() => setSelectedTrip(trip.id)}
-                                className={`px-6 py-4 rounded-lg border-2 transition-all ${selectedTrip === trip.id
-                                        ? 'border-blue-600 bg-blue-50'
-                                        : 'border-gray-200 bg-white hover:border-gray-300'
+                                className={`px-4 py-4 rounded-lg border-2 transition-all ${selectedTrip === trip.id
+                                    ? 'border-blue-600 bg-blue-50'
+                                    : 'border-gray-200 bg-white hover:border-gray-300'
                                     }`}
                             >
                                 <div className="text-left">

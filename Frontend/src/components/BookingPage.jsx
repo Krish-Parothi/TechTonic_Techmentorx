@@ -1,30 +1,47 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const BookingPage = () => {
     const navigate = useNavigate();
-
-    // Mock booking data - in real app, this would come from route state or API
-    const [bookingData] = useState({
-        from: 'Delhi',
-        to: 'Mumbai',
-        fromCode: 'DEL',
-        toCode: 'BOM',
-        departureDate: 'Sunday, March 15, 2026',
-        returnDate: 'Sunday, March 22, 2026',
-        duration: '7 days',
-        totalPrice: 3299,
+    const location = useLocation();
+    // Persist state logic
+    const [stateData] = useState(() => {
+        if (location.state?.flight) {
+            sessionStorage.setItem('bookingState', JSON.stringify(location.state));
+            return location.state;
+        }
+        try {
+            const saved = sessionStorage.getItem('bookingState');
+            return saved ? JSON.parse(saved) : {};
+        } catch (e) {
+            return {};
+        }
     });
 
+    const { flight, from, to } = stateData || {};
+
+    // Use passed data or fallbacks
+    const bookingData = {
+        from: from || 'Delhi',
+        to: to || 'Mumbai',
+        fromCode: from ? from.substring(0, 3).toUpperCase() : 'DEL',
+        toCode: to ? to.substring(0, 3).toUpperCase() : 'BOM',
+        departureDate: new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+        returnDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+        duration: flight?.total_time ? `${flight.total_time.toFixed(1)} hours` : '7 days',
+        totalPrice: flight?.total_price || flight?.price || 3299,
+        type: flight?.type || 'FLIGHT'
+    };
+
     const handleProceedToPayment = () => {
-        navigate('/payment');
+        navigate('/payment', { state: { bookingData } });
     };
 
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="max-w-4xl mx-auto">
+            <header className="bg-white border-b border-gray-200 py-4">
+                <div className="w-full max-w-full mx-auto">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -38,7 +55,7 @@ const BookingPage = () => {
             </header>
 
             {/* Main Content */}
-            <main className="max-w-4xl mx-auto px-6 py-8">
+            <main className="w-full max-w-full mx-auto px-4 py-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-6">Flight Details</h1>
 
                 {/* Flight Details Card */}
