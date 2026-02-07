@@ -9,6 +9,7 @@ import BookingPage from './components/BookingPage.jsx'
 import PaymentPage from './components/PaymentPage.jsx'
 import BookingConfirmed from './components/BookingConfirmed.jsx'
 import TravelPass from './components/TravelPass.jsx'
+import FlightSelection from './components/FlightSelection.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/booking-confirmed" element={<BookingConfirmed />} />
         <Route path="/travel-pass" element={<TravelPass />} />
+        <Route path="/flight-selection" element={<FlightSelection />} />
       </Routes>
     </Router>
   </StrictMode>,
