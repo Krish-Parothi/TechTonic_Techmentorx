@@ -1,111 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>✈️ Live Travel Pricing - Flights, Trains & Multi-Route Search</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRPORT // AI Route Intelligence</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css" />
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'sky-white': '#f8faff',
+                        'aero-blue': '#0066FF',
+                        'midnight': '#0b1120',
+                        'fuselage': '#eef2f6',
+                    },
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace'],
+                    },
+                    boxShadow: {
+                        'float': '0 20px 40px -5px rgba(0, 102, 255, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.04)',
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-
-<div class="container">
-  <header>
-    <h1>🌍 Live Travel Pricing</h1>
-    <p class="subtitle">Prices fetched dynamically from live airline and railway pricing systems and updated in real time based on demand and availability.</p>
-  </header>
-
-  <section class="search-section">
-    <h2>Find Your Route</h2>
-    <div class="search-bar">
-      <div class="input-wrapper">
-        <input 
-          id="from" 
-          type="text"
-          placeholder="From (e.g., Nagpur, Delhi)" 
-          class="input-field"
-          list="cities-list"
-          autocomplete="off"
-        />
-        <span id="from-airport" class="airport-code"></span>
-      </div>
-      
-      <button class="swap-btn" onclick="swapCities()" title="Swap cities">⇄</button>
-      
-      <div class="input-wrapper">
-        <input 
-          id="to" 
-          type="text"
-          placeholder="To (e.g., Leh, Mumbai)" 
-          class="input-field"
-          list="cities-list"
-          autocomplete="off"
-        />
-        <span id="to-airport" class="airport-code"></span>
-      </div>
-      
-      <button onclick="search()" class="search-btn">🔍 Search Fares</button>
-    </div>
-    
-    <datalist id="cities-list">
-      <option value="Nagpur">
-      <option value="Delhi">
-      <option value="Mumbai">
-      <option value="Bangalore">
-      <option value="Leh">
-      <option value="Kolkata">
-      <option value="Hyderabad">
-      <option value="Chennai">
-      <option value="Pune">
-      <option value="Goa">
-    </datalist>
-  </section>
-
-  <div id="loading" class="loading" style="display: none;">
-    <div class="spinner"></div>
-    <p>Fetching live fares from airline and railway APIs...</p>
-    <p class="latency">This may take 1-2 seconds...</p>
-  </div>
-
-  <div id="status" class="status-message"></div>
-
-  <section id="results" class="results-section" style="display: none;">
-    <div class="results-header">
-      <h2>Available Routes</h2>
-      <div id="cheapest-badge" class="cheapest-badge"></div>
-    </div>
-    
-    <div class="results-info">
-      <span id="search-info" class="search-info"></span>
-      <button onclick="search()" class="search-again-btn">Search Again</button>
-    </div>
-    
-    <div id="routesList" class="routes-list"></div>
-  </section>
-
-  <section class="map-section">
-    <h3>Route Visualization</h3>
-    <div id="map" class="map-container"></div>
-  </section>
-
-  <section class="info-section">
-    <h3>How It Works</h3>
-    <ul>
-      <li>✈️ <strong>Direct Flights:</strong> Real-time LCC and carrier pricing</li>
-      <li>🚂 <strong>Direct Trains:</strong> Indian Railways live fare database</li>
-      <li>🔀 <strong>Mixed Routes:</strong> Flight + Train combinations via major hubs</li>
-      <li>💰 <strong>AI-Optimized:</strong> Dynamic pricing based on demand & season</li>
-    </ul>
-  </section>
-
-  <footer>
-    <p>Data Source: Live Airline Pricing API | Indian Rail Live Fare API</p>
-    <p>Latency: Real-time updates every search | Cache: None</p>
-  </footer>
-</div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="app.js"></script>
-
+<body class="bg-sky-white text-midnight antialiased overflow-hidden selection:bg-aero-blue selection:text-white">
+    <div id="root"></div>
+    <script src="maps.js"></script>
+    <script type="text/babel" src="app.js"></script>
 </body>
 </html>
