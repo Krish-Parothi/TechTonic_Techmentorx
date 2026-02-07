@@ -3,9 +3,9 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from bson import ObjectId
 
-from mongo_connection import users_collection
-from auth_schema import SignupSchema
-from password_utils import hash_password
+from .mongo_connection import users_collection
+from .auth_schema import SignupSchema
+from .password_utils import hash_password
 
 app = APIRouter(prefix="/auth", tags=["Auth"])
 

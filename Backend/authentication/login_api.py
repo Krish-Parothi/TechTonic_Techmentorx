@@ -2,10 +2,10 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime
 import os
 
-from auth_schema import LoginSchema, TokenResponseSchema
-from password_utils import verify_password
-from jwt_utils import create_access_token
-from mongo_connection import users_collection
+from .auth_schema import LoginSchema, TokenResponseSchema
+from .password_utils import verify_password
+from .jwt_utils import create_access_token
+from .mongo_connection import users_collection
 
 app = APIRouter(prefix="/auth", tags=["Auth"])
 

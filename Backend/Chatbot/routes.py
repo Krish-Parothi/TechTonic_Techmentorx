@@ -6,7 +6,7 @@ Minimal routes file - all logic in chatbot.py
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from Chatbot.chatbot import get_travel_recommendation, chat_with_assistant, get_available_cities
+from .chatbot import get_travel_recommendation, chat_with_assistant, get_available_cities
 
 app = APIRouter(prefix="/chat", tags=["Travel Assistant"])
 
