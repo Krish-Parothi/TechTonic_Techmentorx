@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIRPORT // AI Route Intelligence</title>
+    <title>FlyWise // AI INTELLIGENCE</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -11,13 +11,23 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "@react-three/fiber": "https://unpkg.com/@react-three/fiber@8.15.14/dist/react-three-fiber.esm.js",
+                "@react-three/drei": "https://unpkg.com/@react-three/drei@9.99.0/index.js",
+                "uuid": "https://unpkg.com/uuid@9.0.1/dist/esm-browser/index.js"
+            }
+        }
+    </script>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css" />
 
@@ -26,27 +36,26 @@
             theme: {
                 extend: {
                     colors: {
-                        'sky-white': '#f8faff',
-                        'aero-blue': '#0066FF',
-                        'midnight': '#0b1120',
-                        'fuselage': '#eef2f6',
+                        'obsidian': '#050505',
+                        'glass': 'rgba(255, 255, 255, 0.05)',
+                        'fly-blue': '#00f3ff', /* The Signature AI Color */
+                        'fly-purple': '#bc13fe',
                     },
                     fontFamily: {
-                        sans: ['"Inter"', 'sans-serif'],
-                        mono: ['"Space Mono"', 'monospace'],
+                        display: ['"Syncopate"', 'sans-serif'],
+                        tech: ['"Space Grotesk"', 'sans-serif'],
                     },
-                    boxShadow: {
-                        'float': '0 20px 40px -5px rgba(0, 102, 255, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.04)',
-                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-sky-white text-midnight antialiased overflow-hidden selection:bg-aero-blue selection:text-white">
-    <div id="root"></div>
+<body class="bg-obsidian text-white overflow-hidden antialiased selection:bg-fly-blue selection:text-black">
+    <div id="root" class="h-screen w-screen"></div>
     <script src="maps.js"></script>
-    <script type="text/babel" src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

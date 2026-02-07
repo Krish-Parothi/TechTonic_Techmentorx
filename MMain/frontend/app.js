@@ -1,19 +1,350 @@
-const { useState, useEffect, useRef } = React;
-const { motion, AnimatePresence } = window.Motion;
+import React, { useState, useRef, useEffect, useMemo, Suspense } from 'react';
+import { createRoot } from 'react-dom/client';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Float, Stars, Environment, Sparkles } from '@react-three/drei';
+import * as THREE from 'three';
+import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 
-// ==================== CONSTANTS & DATA ====================
+// ==========================================
+// 1. THE 3D "OBSIDIAN JET" COMPONENT
+// ==========================================
 
-const CITY_DATABASE = {
-  nagpur: { name: "Nagpur", airport: "NAG", lat: 21.1458, lon: 79.0882 },
-  delhi: { name: "Delhi", airport: "DEL", lat: 28.7041, lon: 77.1025 },
-  mumbai: { name: "Mumbai", airport: "BOM", lat: 19.076, lon: 72.8776 },
-  bangalore: { name: "Bangalore", airport: "BLR", lat: 12.9716, lon: 77.5946 },
-  leh: { name: "Leh", airport: "LEH", lat: 34.1526, lon: 77.577 },
-  kolkata: { name: "Kolkata", airport: "CCU", lat: 22.5726, lon: 88.3639 },
-  hyderabad: { name: "Hyderabad", airport: "HYD", lat: 17.385, lon: 78.4867 },
-  chennai: { name: "Chennai", airport: "MAA", lat: 13.0827, lon: 80.2707 },
-  pune: { name: "Pune", airport: "PNQ", lat: 18.5204, lon: 73.8567 },
-  goa: { name: "Goa", airport: "GOI", lat: 15.3417, lon: 73.8244 },
+const ObsidianJet = (props) => {
+  const group = useRef();
+  
+  // Material: Liquid Chrome Black
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: "#0a0a0a",
+    roughness: 0.15,
+    metalness: 0.9,
+    envMapIntensity: 2
+  });
+
+  // Material: Cockpit Glass
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color: "#111",
+    roughness: 0,
+    metalness: 0.1,
+    transmission: 0.9,
+    transparent: true,
+    opacity: 0.5
+  });
+
+  // Material: Engine Glow
+  const glowMat = new THREE.MeshBasicMaterial({ color: "#00f3ff" });
+
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    // Physics-like floating
+    group.current.rotation.z = Math.sin(t / 2) * 0.15; // Banking
+    group.current.rotation.x = Math.sin(t / 1.5) * 0.05; // Pitch
+    group.current.position.y = Math.sin(t) * 0.2; // Altitude
+  });
+
+  // Aerodynamic Wing Shape
+  const wingShape = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0);
+    shape.lineTo(2.2, 1.8); // Tip Back
+    shape.lineTo(2.2, 1.0); // Tip Front
+    shape.lineTo(0, -1.5);  // Root
+    return shape;
+  }, []);
+
+  return (
+    <group ref={group} {...props}>
+        {/* FUSELAGE */}
+        <mesh rotation={[Math.PI / 2, 0, 0]} material={bodyMat}>
+            <capsuleGeometry args={[0.6, 5.5, 4, 16]} />
+        </mesh>
+
+        {/* COCKPIT WINDOW */}
+        <mesh position={[0, 0.45, 2.0]} rotation={[0.3, 0, 0]} material={glassMat}>
+            <capsuleGeometry args={[0.35, 1.5, 4, 8]} />
+        </mesh>
+
+        {/* WINGS */}
+        <group position={[0, -0.2, 0.5]}>
+            <mesh rotation={[Math.PI / 2, 0, -0.15]} position={[0.5, 0, 0]} material={bodyMat}>
+                <extrudeGeometry args={[wingShape, { depth: 0.15, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.05 }]} />
+            </mesh>
+            <mesh rotation={[Math.PI / 2, 0, 0.15]} position={[-0.5, 0, 0]} scale={[-1, 1, 1]} material={bodyMat}>
+                <extrudeGeometry args={[wingShape, { depth: 0.15, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.05 }]} />
+            </mesh>
+        </group>
+
+        {/* REAR STABILIZERS (V-TAIL) */}
+        <group position={[0, 0.5, -2.2]}>
+             <mesh rotation={[Math.PI / 2, 0, -0.5]} position={[0.2, 0, 0]} scale={[0.6, 0.6, 0.6]} material={bodyMat}>
+                 <extrudeGeometry args={[wingShape, { depth: 0.2, bevelEnabled: true }]} />
+            </mesh>
+             <mesh rotation={[Math.PI / 2, 0, 0.5]} position={[-0.2, 0, 0]} scale={[-0.6, 0.6, 0.6]} material={bodyMat}>
+                 <extrudeGeometry args={[wingShape, { depth: 0.2, bevelEnabled: true }]} />
+            </mesh>
+        </group>
+
+        {/* ENGINES */}
+        <group position={[0, 0.3, -1.5]}>
+            {[0.8, -0.8].map((x, i) => (
+                <group key={i} position={[x, 0, 0]}>
+                    <mesh rotation={[Math.PI/2, 0, 0]} material={bodyMat}>
+                        <cylinderGeometry args={[0.25, 0.35, 1.5, 32]} />
+                    </mesh>
+                    {/* Afterburner */}
+                    <mesh position={[0, 0, -0.76]} rotation={[Math.PI/2, 0, 0]} material={glowMat}>
+                        <circleGeometry args={[0.22, 32]} />
+                    </mesh>
+                </group>
+            ))}
+        </group>
+    </group>
+  );
+};
+
+// ==========================================
+// 2. THE 3D SCENE CONFIG
+// ==========================================
+
+const Scene = () => {
+  return (
+    <>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={20} color="#fff" />
+      <pointLight position={[-10, -5, -5]} intensity={50} color="#00f3ff" />
+      
+      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
+        <ObsidianJet scale={0.8} rotation={[0, Math.PI, 0]} />
+      </Float>
+
+      <Sparkles count={150} scale={12} size={3} speed={0.4} opacity={0.4} color="#00f3ff" />
+      <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={1} />
+      <Environment preset="city" />
+    </>
+  );
+};
+
+// ==========================================
+// 3. UI COMPONENTS
+// ==========================================
+
+// 3D Tilt Wrapper for Cards
+const TiltCard = ({ children, className }) => {
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+    const mouseX = useSpring(x, { stiffness: 300, damping: 30 });
+    const mouseY = useSpring(y, { stiffness: 300, damping: 30 });
+    const rotateX = useTransform(mouseY, [-0.5, 0.5], [15, -15]);
+    const rotateY = useTransform(mouseX, [-0.5, 0.5], [-15, 15]);
+
+    const handleMouseMove = (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        x.set((e.clientX - rect.left) / rect.width - 0.5);
+        y.set((e.clientY - rect.top) / rect.height - 0.5);
+    };
+
+    return (
+        <motion.div
+            style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => { x.set(0); y.set(0); }}
+            className={`perspective-1000 hover:z-50 transition-all duration-500 ${className}`}
+        >
+            <div className="preserve-3d h-full w-full">{children}</div>
+        </motion.div>
+    );
+};
+
+const FlightResult = ({ data }) => {
+    return (
+        <TiltCard className="relative w-full mb-6 cursor-pointer group">
+            <div className="relative overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 p-8 flex flex-col justify-between group-hover:border-fly-blue/50 transition-colors duration-300">
+                
+                {/* Holographic Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+
+                <div className="flex justify-between items-start mb-6" style={{transform: "translateZ(30px)"}}>
+                    <div>
+                        <h3 className="font-display text-xl text-white tracking-widest">{data.airline}</h3>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[10px] font-tech bg-fly-blue text-black px-1 font-bold">SMART-ROUTE</span>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-fly-blue font-display font-bold text-3xl">₹{data.price.toLocaleString()}</div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-6 my-4" style={{transform: "translateZ(20px)"}}>
+                    <div className="text-center">
+                        <div className="text-4xl font-tech font-light text-white">{data.fromCode}</div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col items-center">
+                        <div className="w-full h-px bg-white/20 relative group-hover:bg-fly-blue/50 transition-colors">
+                            <div className="absolute top-1/2 left-0 w-1 h-1 bg-white -translate-y-1/2"></div>
+                            <div className="absolute top-1/2 right-0 w-1 h-1 bg-fly-blue -translate-y-1/2"></div>
+                            <i className="ph-fill ph-airplane absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/50 rotate-90 text-xs"></i>
+                        </div>
+                        <div className="text-[10px] font-mono text-gray-500 mt-2">{data.duration}</div>
+                    </div>
+
+                    <div className="text-center">
+                        <div className="text-4xl font-tech font-light text-white">{data.toCode}</div>
+                    </div>
+                </div>
+            </div>
+        </TiltCard>
+    );
+};
+
+// ==========================================
+// 4. MAIN APPLICATION
+// ==========================================
+
+const App = () => {
+    const [from, setFrom] = useState("NAGPUR");
+    const [to, setTo] = useState("MUMBAI");
+    const [results, setResults] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        window.MapEngine.init("tactical-map");
+    }, []);
+
+    const handleSearch = () => {
+        setLoading(true);
+        setResults([]);
+        
+        // Mock API Latency
+        setTimeout(() => {
+            setResults([
+                { airline: "FLYWISE PRIME", code: "FW-001", price: 8500, fromCode: "NAG", toCode: "BOM", duration: "0H 55M" },
+                { airline: "INDIGO NEO", code: "6E-202", price: 4200, fromCode: "NAG", toCode: "BOM", duration: "1H 10M" },
+                { airline: "STAR ALLIANCE", code: "AI-777", price: 6100, fromCode: "NAG", toCode: "BOM", duration: "1H 30M" },
+            ]);
+            setLoading(false);
+            
+            // Trigger Map Visualization
+            // Nagpur to Mumbai Coords
+            window.MapEngine.visualizeRoute([21.1458, 79.0882], [19.076, 72.8776]);
+        }, 1500);
+    };
+
+    return (
+        <div className="w-full h-full relative flex overflow-hidden bg-obsidian">
+            
+            {/* 3D BACKGROUND CANVAS */}
+            <div className="absolute inset-0 z-0">
+                <Canvas camera={{ position: [0, 0, 6], fov: 40 }}>
+                    <Suspense fallback={null}>
+                        <Scene />
+                    </Suspense>
+                    <OrbitControls 
+                        enableZoom={false} 
+                        enablePan={false} 
+                        minPolarAngle={Math.PI / 2.2} 
+                        maxPolarAngle={Math.PI / 1.8}
+                        autoRotate 
+                        autoRotateSpeed={0.8} 
+                    />
+                </Canvas>
+            </div>
+
+            {/* UI LAYER */}
+            <div className="relative z-10 w-full h-full flex flex-col lg:flex-row pointer-events-none">
+                
+                {/* LEFT: INTERFACE */}
+                <div className="w-full lg:w-[45%] h-full pointer-events-auto flex flex-col p-8 lg:p-16 bg-gradient-to-r from-obsidian via-obsidian/90 to-transparent">
+                    
+                    <header className="mb-12">
+                        <div className="flex items-center gap-3 mb-2">
+                            <i className="ph-fill ph-planet text-fly-blue text-xl animate-pulse"></i>
+                            <span className="text-[10px] tracking-[0.3em] font-tech text-gray-400 uppercase">AI Neural Network</span>
+                        </div>
+                        <h1 className="text-5xl lg:text-7xl font-display text-white tracking-tighter leading-none">
+                            FLY<span className="text-fly-blue">WISE</span>
+                        </h1>
+                        <p className="text-gray-500 font-tech mt-2 tracking-wide">NEXT-GEN FLIGHT INTELLIGENCE</p>
+                    </header>
+
+                    {/* Search Inputs */}
+                    <div className="space-y-8 mb-8 max-w-md">
+                        <div className="relative group">
+                            <input 
+                                type="text" 
+                                value={from}
+                                onChange={(e) => setFrom(e.target.value.toUpperCase())}
+                                className="w-full bg-transparent border-b border-white/10 py-3 text-2xl font-tech text-white focus:outline-none focus:border-fly-blue transition-all"
+                            />
+                            <label className="absolute top-0 left-0 text-[10px] uppercase tracking-widest text-gray-500 -translate-y-5 group-focus-within:text-fly-blue transition-colors">Origin</label>
+                        </div>
+
+                        <div className="relative group">
+                            <input 
+                                type="text" 
+                                value={to}
+                                onChange={(e) => setTo(e.target.value.toUpperCase())}
+                                className="w-full bg-transparent border-b border-white/10 py-3 text-2xl font-tech text-white focus:outline-none focus:border-fly-blue transition-all"
+                            />
+                            <label className="absolute top-0 left-0 text-[10px] uppercase tracking-widest text-gray-500 -translate-y-5 group-focus-within:text-fly-blue transition-colors">Destination</label>
+                        </div>
+
+                        <button 
+                            onClick={handleSearch}
+                            className="group relative w-full h-14 bg-white/5 border border-white/10 overflow-hidden hover:border-fly-blue/50 transition-colors"
+                        >
+                            <div className="absolute inset-0 bg-fly-blue translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+                            <span className="relative z-10 flex items-center justify-center h-full text-sm font-display tracking-[0.2em] group-hover:text-black transition-colors">
+                                {loading ? "CALCULATING TRAJECTORY..." : "INITIATE SEARCH"}
+                            </span>
+                        </button>
+                    </div>
+
+                    {/* Results Area */}
+                    <div className="flex-1 overflow-y-auto no-scrollbar pr-2">
+                        <AnimatePresence>
+                            {results.map((flight, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, x: -50 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: i * 0.15, type: "spring" }}
+                                >
+                                    <FlightResult data={flight} />
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                </div>
+
+                {/* RIGHT: MAP VISUALIZATION */}
+                <div className="hidden lg:block w-[55%] h-full relative pointer-events-auto">
+                    {/* Floating Map Hud */}
+                    <div className="absolute bottom-12 right-12 w-[400px] h-[300px] border border-white/10 bg-black/80 backdrop-blur-xl z-20 shadow-2xl overflow-hidden group">
+                        
+                        {/* HUD Corners */}
+                        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-fly-blue"></div>
+                        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-fly-blue"></div>
+                        
+                        {/* The Map */}
+                        <div id="tactical-map" className="w-full h-full opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        
+                        {/* Scanning Line Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-fly-blue/10 to-transparent h-4 w-full animate-scanline pointer-events-none"></div>
+                        
+                        <div className="absolute top-4 left-4 text-[10px] font-mono text-fly-blue tracking-widest bg-black/50 px-2 py-1">
+                            LIVE SATELLITE LINK // ACTIVE
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);
 };
 
 const LOCATION_COORDS = {
