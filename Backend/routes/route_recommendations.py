@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from schemas.route import RouteRecommendationRequest, RouteRecommendationResponse, TransportOption
 from typing import Dict, List
 
-router = APIRouter(prefix="/routes", tags=["Routes"])
+app = APIRouter(prefix="/routes", tags=["Routes"])
 
 # Sample route data (in production, this would come from a database or external API)
 ROUTE_DATABASE = {
@@ -148,7 +148,7 @@ def determine_best_options(modes: Dict) -> Dict[str, str]:
     return best_options
 
 
-@router.post("/recommend", response_model=RouteRecommendationResponse)
+@app.post("/recommend", response_model=RouteRecommendationResponse)
 def recommend_routes(request: RouteRecommendationRequest):
     """
     Get route recommendations between two locations with multiple transport modes.
@@ -213,7 +213,7 @@ def recommend_routes(request: RouteRecommendationRequest):
     )
 
 
-@router.get("/available-routes")
+@app.get("/available-routes")
 def get_available_routes():
     """Get list of all available routes in the system"""
     routes = []
