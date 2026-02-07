@@ -1,494 +1,83 @@
-// ============================================
-// LOCATION DATA & CITY INFORMATION
-// ============================================
+﻿import React, { useState, useRef, useEffect, Suspense } from 'react';
+import { createRoot } from 'react-dom/client';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Float, Stars, Environment, Sparkles } from '@react-three/drei';
+import * as THREE from 'three';
+import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 
-const cityDatabase = {
-  nagpur: { name: "Nagpur", airport: "NAG", lat: 21.1458, lon: 79.0882 },
-  delhi: { name: "Delhi", airport: "DEL", lat: 28.7041, lon: 77.1025 },
-  mumbai: { name: "Mumbai", airport: "BOM", lat: 19.076, lon: 72.8776 },
-  bangalore: { name: "Bangalore", airport: "BLR", lat: 12.9716, lon: 77.5946 },
-  leh: { name: "Leh", airport: "LEH", lat: 34.1526, lon: 77.577 },
-  kolkata: { name: "Kolkata", airport: "CCU", lat: 22.5726, lon: 88.3639 },
-  hyderabad: { name: "Hyderabad", airport: "HYD", lat: 17.385, lon: 78.4867 },
-  chennai: { name: "Chennai", airport: "MAA", lat: 13.0827, lon: 80.2707 },
-  pune: { name: "Pune", airport: "PNQ", lat: 18.5204, lon: 73.8567 },
-  goa: { name: "Goa", airport: "GOI", lat: 15.3417, lon: 73.8244 },
+// 3D JET COMPONENT
+const ObsidianJet = (props) => {
+  const group = useRef();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: "#0a0a0a", roughness: 0.15, metalness: 0.9 });
+  const glassMat = new THREE.MeshPhysicalMaterial({ color: "#111", roughness: 0.1, metalness: 0.2, transmission: 0.8 });
+  const glowMat = new THREE.MeshBasicMaterial({ color: "#00f3ff", emissive: "#00f3ff", emissiveIntensity: 1 });
+
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    if (group.current) {
+      group.current.rotation.z = Math.sin(t / 2) * 0.15;
+      group.current.rotation.x = Math.sin(t / 1.5) * 0.05;
+      group.current.position.y = Math.sin(t) * 0.2;
+    }
+  });
+
+  return (
+    <group ref={group} {...props}>
+      <mesh rotation={[Math.PI / 2, 0, 0]} material={bodyMat}><capsuleGeometry args={[0.6, 5.5, 4, 16]} /></mesh>
+      <mesh position={[0, 0.45, 2.0]} rotation={[0.3, 0, 0]} material={glassMat}><capsuleGeometry args={[0.35, 1.5, 4, 8]} /></mesh>
+      <group position={[0, -0.2, 0.5]}>
+        <mesh rotation={[Math.PI / 2, 0, -0.15]} position={[0.8, 0, 0]} material={bodyMat}><boxGeometry args={[2.0, 0.1, 0.3]} /></mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0.15]} position={[-0.8, 0, 0]} material={bodyMat}><boxGeometry args={[2.0, 0.1, 0.3]} /></mesh>
+      </group>
+      <group position={[0, 0.3, -1.5]}>
+        {[0.8, -0.8].map((x, i) => (
+          <group key={i} position={[x, 0, 0]}>
+            <mesh rotation={[Math.PI/2, 0, 0]} material={bodyMat}><cylinderGeometry args={[0.25, 0.35, 1.5, 32]} /></mesh>
+            <mesh position={[0, 0, -0.76]} rotation={[Math.PI/2, 0, 0]} material={glowMat}><circleGeometry args={[0.22, 32]} /></mesh>
+          </group>
+        ))}
+      </group>
+    </group>
+  );
 };
 
-const locationCoords = {
-  Nagpur: [21.1458, 79.0882],
-  Delhi: [28.7041, 77.1025],
-  Mumbai: [19.076, 72.8776],
-  Bangalore: [12.9716, 77.5946],
-  Leh: [34.1526, 77.577],
-  Kolkata: [22.5726, 88.3639],
-  Hyderabad: [17.385, 78.4867],
-  Chennai: [13.0827, 80.2707],
-  Pune: [18.5204, 73.8567],
-  Goa: [15.3417, 73.8244],
+const Scene = () => (<><ambientLight intensity={0.5} /><pointLight position={[10, 10, 10]} intensity={20} color="#fff" /><pointLight position={[-10, -5, -5]} intensity={50} color="#00f3ff" /><Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}><ObsidianJet scale={0.8} rotation={[0, Math.PI, 0]} /></Float><Sparkles count={150} scale={12} size={3} speed={0.4} opacity={0.4} color="#00f3ff" /><Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={1} /><Environment preset="city" /></>);
+
+const TiltCard = ({ children, className = "" }) => {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const mouseX = useSpring(x, { stiffness: 300, damping: 30 });
+  const mouseY = useSpring(y, { stiffness: 300, damping: 30 });
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], [15, -15]);
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-15, 15]);
+  const handleMouseMove = (e) => { const rect = e.currentTarget.getBoundingClientRect(); x.set((e.clientX - rect.left) / rect.width - 0.5); y.set((e.clientY - rect.top) / rect.height - 0.5); };
+  return (<motion.div style={{ rotateX, rotateY, perspective: 1000 }} onMouseMove={handleMouseMove} onMouseLeave={() => { x.set(0); y.set(0); }} className={preserve-3d transition-all }>{children}</motion.div>);
 };
 
-// ============================================
-// MAP INITIALIZATION
-// ============================================
+const FlightResult = ({ flight }) => (<TiltCard className="p-4"><div className="bg-gradient-to-br from-fly-blue/20 to-fly-purple/20 border border-fly-blue/50 rounded-lg p-4 backdrop-blur-sm hover:border-fly-blue transition-all"><div className="font-display text-lg font-bold text-fly-blue mb-1">{flight.airline}</div><div className="text-tech text-sm text-gray-400 mb-2">{flight.fromCode} →  {flight.toCode}</div><div className="flex justify-between items-center"><span className="text-tech text-white font-bold">\</span><span className="text-tech text-xs text-fly-blue">{flight.duration}</span></div></div></TiltCard>);
 
-let map = null;
-let markers = {};
-let polylines = {};
+const App = () => {
+  const [from, setFrom] = useState("NAGPUR");
+  const [to, setTo] = useState("MUMBAI");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => { if (window.MapEngine) window.MapEngine.init("tactical-map"); }, []);
+  const handleSearch = () => {
+    if (!from || !to) return;
+    setLoading(true);
+    setResults([]);
+    setTimeout(() => {
+      setResults([
+        { id: 1, airline: "FLYWISE PRIME", fromCode: "NAG", toCode: "MUM", price: 8500, duration: "0H 55M" },
+        { id: 2, airline: "INDIGO NEO", fromCode: "NAG", toCode: "MUM", price: 4200, duration: "1H 10M" },
+        { id: 3, airline: "STAR ALLIANCE", fromCode: "NAG", toCode: "MUM", price: 6100, duration: "1H 30M" },
+      ]);
+      setLoading(false);
+      if (window.MapEngine) window.MapEngine.visualizeRoute([21.1458, 79.0882], [19.076, 72.8776]);
+    }, 1500);
+  };
+  return (<div className="w-full h-full relative flex overflow-hidden bg-obsidian text-white"><div className="absolute inset-0 z-0 w-full h-full"><Canvas camera={{ position: [0, 0, 6], fov: 40 }}><Suspense fallback={null}><Scene /></Suspense><OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.8} /></Canvas></div><div className="absolute inset-0 z-10 pointer-events-none"><div className="flex h-full w-full"><div className="w-full lg:w-1/2 p-8 pointer-events-auto"><motion.h1 className="font-display text-4xl font-bold text-fly-blue mb-2" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>FLYWISE</motion.h1><motion.p className="font-tech text-sm text-gray-400 mb-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>AI-Powered Route Intelligence</motion.p><motion.div className="space-y-4 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}><input type="text" placeholder="From City" value={from} onChange={(e) => setFrom(e.target.value.toUpperCase())} className="w-full bg-glass border border-fly-blue/50 rounded-lg px-4 py-2 text-white font-tech text-sm focus:outline-none focus:border-fly-blue transition-all" /><input type="text" placeholder="To City" value={to} onChange={(e) => setTo(e.target.value.toUpperCase())} className="w-full bg-glass border border-fly-blue/50 rounded-lg px-4 py-2 text-white font-tech text-sm focus:outline-none focus:border-fly-blue transition-all" /><motion.button onClick={handleSearch} disabled={loading} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full bg-fly-blue/20 border border-fly-blue px-6 py-2 rounded-lg text-fly-blue font-tech font-bold hover:bg-fly-blue/30 disabled:opacity-50 transition-all">{loading ? "SEARCHING..." : "SEARCH ROUTES"}</motion.button></motion.div><AnimatePresence>{results.length > 0 && (<motion.div className="space-y-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>{results.map((result) => (<motion.div key={result.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}><FlightResult flight={result} /></motion.div>))}</motion.div>)}</AnimatePresence></div><div className="hidden lg:flex w-1/2 p-8 pointer-events-auto justify-end"><motion.div className="w-80 h-80 bg-glass border-2 border-fly-blue/40 rounded-2xl relative overflow-hidden" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}><div id="tactical-map" className="w-full h-full"></div><div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-fly-blue"></div><div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-fly-blue"></div><div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-fly-blue"></div><div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-fly-blue"></div><div className="absolute inset-0 pointer-events-none scanline-overlay opacity-10"></div><div className="absolute bottom-3 left-3 font-tech text-xs text-fly-blue">SATELLITE LINK</div></motion.div></div></div></div>);
+};
 
-function initializeMap() {
-  if (map) return map;
-  
-  map = L.map("map").setView([22.9734, 78.6569], 5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19,
-  }).addTo(map);
-  
-  return map;
-}
-
-// ============================================
-// LOCATION UTILITIES
-// ============================================
-
-function getCityInfo(cityName) {
-  const key = cityName.toLowerCase().trim();
-  return cityDatabase[key];
-}
-
-function updateAirportCode(inputId, labelId) {
-  const city = document.getElementById(inputId).value.trim();
-  const label = document.getElementById(labelId);
-  
-  if (city) {
-    const info = getCityInfo(city);
-    if (info) {
-      label.textContent = info.airport;
-      label.classList.add("show");
-    } else {
-      label.classList.remove("show");
-    }
-  } else {
-    label.classList.remove("show");
-  }
-}
-
-function swapCities() {
-  const fromInput = document.getElementById("from");
-  const toInput = document.getElementById("to");
-  [fromInput.value, toInput.value] = [toInput.value, fromInput.value];
-  
-  updateAirportCode("from", "from-airport");
-  updateAirportCode("to", "to-airport");
-}
-
-// Update airport codes on input
-document.getElementById("from")?.addEventListener("input", () => {
-  updateAirportCode("from", "from-airport");
-});
-
-document.getElementById("to")?.addEventListener("input", () => {
-  updateAirportCode("to", "to-airport");
-});
-
-// ============================================
-// SEARCH FUNCTIONALITY
-// ============================================
-
-let searchStartTime = null;
-let currentShowAll = false;
-let currentRoutes = [];
-let currentRejected = [];
-
-async function search() {
-  const from = document.getElementById("from").value.trim();
-  const to = document.getElementById("to").value.trim();
-
-  if (!from || !to) {
-    alert("Please enter both source and destination from the list");
-    return;
-  }
-
-  // Validate cities
-  if (!getCityInfo(from)) {
-    alert(`City not found: ${from}`);
-    return;
-  }
-  if (!getCityInfo(to)) {
-    alert(`City not found: ${to}`);
-    return;
-  }
-
-  searchStartTime = Date.now();
-  
-  // Show loading state
-  document.getElementById("loading").style.display = "block";
-  document.getElementById("status").textContent = "";
-  document.getElementById("results").style.display = "none";
-
-  try {
-    // Small artificial delay for UX
-    await new Promise((res) => setTimeout(res, 500));
-
-    const response = await fetch("http://localhost:5000/api/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Server error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    // Hide loading, show results
-    document.getElementById("loading").style.display = "none";
-    const elapsed = Math.round((Date.now() - searchStartTime) / 100) / 10;
-    document.getElementById("status").innerHTML =
-      `✅ Prices updated just now (${new Date().toLocaleTimeString()}) - Fetched in ${elapsed}s via Live Pricing APIs`;
-    document.getElementById("results").style.display = "block";
-
-    // Display search info
-    const fromCity = getCityInfo(from).airport;
-    const toCity = getCityInfo(to).airport;
-    document.querySelector(".search-info").innerHTML =
-      `<strong>${from} (${fromCity}) → ${to} (${toCity})</strong> | ${data.routes.length} routes found`;
-
-    // Store data for show-more functionality
-    currentShowAll = false;
-    currentRoutes = data.routes;
-    currentRejected = data.rejected_routes || [];
-
-    // Render routes
-    renderRoutes(from, to);
-
-    // Render cheapest info
-    const cheapest = data.cheapest;
-    document.querySelector(".cheapest-badge").innerHTML =
-      `💚 Best Price: ${cheapest.type} @ ₹${cheapest.price.toLocaleString("en-IN")}`;
-
-    // Draw map
-    initializeMap();
-    drawMap(from, to, data.routes);
-  } catch (error) {
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("status").innerHTML =
-      `❌ Error: ${error.message}. Ensure backend is running on port 5000.`;
-    console.error("Search error:", error);
-  }
-}
-
-// ============================================
-// ROUTE RENDERING
-// ============================================
-
-function renderRoutes(from, to) {
-  const routesList = document.getElementById("routesList");
-  routesList.innerHTML = "";
-
-  // Filter routes: show PRIMARY by default, all if showAll
-  const visibleRoutes = currentShowAll
-    ? currentRoutes
-    : currentRoutes.filter((r) => r.visibility !== "SECONDARY");
-
-  // Render visible routes
-  visibleRoutes.forEach((route, index) => {
-    const card = document.createElement("div");
-    card.className = `route-card ${route.featured ? "featured" : ""} ${
-      route.visibility === "SECONDARY" ? "secondary" : ""
-    }`;
-
-    const typeEmoji = {
-      FLIGHT: "✈️",
-      TRAIN: "🚂",
-      MIXED: "🔀",
-    }[route.type] || "📍";
-
-    let mainDetails = "";
-    let additionalInfo = "";
-
-    if (route.type === "FLIGHT") {
-      mainDetails = `${typeEmoji} Direct Flight: ${from} → ${to}`;
-      additionalInfo = `
-        <div class="route-details-row">
-          <div class="detail-item">
-            <div class="detail-label">Duration</div>
-            <div class="detail-value">${route.total_time.toFixed(1)} hours</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Stops</div>
-            <div class="detail-value">Non-stop</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Source</div>
-            <div class="detail-value">Live API</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Updated</div>
-            <div class="detail-value">Just now</div>
-          </div>
-        </div>
-      `;
-    } else if (route.type === "TRAIN") {
-      mainDetails = `${typeEmoji} Direct Train: ${from} → ${to}`;
-      additionalInfo = `
-        <div class="route-details-row">
-          <div class="detail-item">
-            <div class="detail-label">Duration</div>
-            <div class="detail-value">${route.total_time.toFixed(1)} hours</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Class</div>
-            <div class="detail-value">Sleeper/AC</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Source</div>
-            <div class="detail-value">Live API</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Available</div>
-            <div class="detail-value">Multiple times</div>
-          </div>
-        </div>
-      `;
-    } else if (route.type === "MIXED") {
-      const leg1 = route.legs?.[0];
-      const leg2 = route.legs?.[1];
-      mainDetails = `${typeEmoji} Multi-leg via ${route.hub}: ${from} → ${route.hub} → ${to}`;
-
-      const leg1Price = leg1?.price || 0;
-      const leg2Price = leg2?.price || 0;
-
-      const explanationHTML = route.explanation
-        ? `<div class="explanation">💡 ${route.explanation}</div>`
-        : "";
-
-      additionalInfo = `
-        <div class="route-details-row">
-          <div class="detail-item">
-            <div class="detail-label">Route Type</div>
-            <div class="detail-value">Optimized Connection</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Hub</div>
-            <div class="detail-value">${route.hub}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Total Time</div>
-            <div class="detail-value">${route.total_time.toFixed(1)} hours</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Source</div>
-            <div class="detail-value">Route Optimization</div>
-          </div>
-        </div>
-        ${explanationHTML}
-        ${leg1 ? `<div class="leg-info">✈️ <strong>Leg 1:</strong> ${leg1.from} → ${leg1.to} | ₹${leg1Price.toLocaleString("en-IN")}</div>` : ""}
-        ${leg2 ? `<div class="leg-info">🚂 <strong>Leg 2:</strong> ${leg2.from} → ${leg2.to} | ₹${leg2Price.toLocaleString("en-IN")}</div>` : ""}
-      `;
-    }
-
-    const displayPrice = route.total_price ?? route.price ?? 0;
-
-    card.innerHTML = `
-      <div class="route-header">
-        <div>
-          <div class="route-type">${mainDetails}</div>
-          ${route.featured ? '<span class="featured-badge">⭐ CHEAPEST</span>' : ""}
-        </div>
-        <div class="route-price">₹${displayPrice.toLocaleString("en-IN")}</div>
-      </div>
-      <div class="route-details">
-        ${additionalInfo}
-      </div>
-    `;
-
-    routesList.appendChild(card);
-  });
-
-  // Show "more routes" button if there are secondary routes not visible
-  const secondaryCount = currentRoutes.filter(
-    (r) => r.visibility === "SECONDARY"
-  ).length;
-  if (secondaryCount > 0 && !currentShowAll) {
-    const moreBtn = document.createElement("button");
-    moreBtn.className = "show-more-btn";
-    moreBtn.innerText = `Show ${secondaryCount} more route(s)`;
-    moreBtn.onclick = () => {
-      currentShowAll = true;
-      renderRoutes(from, to);
-    };
-    routesList.appendChild(moreBtn);
-  } else if (currentShowAll && secondaryCount > 0) {
-    const hideBtn = document.createElement("button");
-    hideBtn.className = "show-more-btn";
-    hideBtn.innerText = "Hide secondary routes";
-    hideBtn.onclick = () => {
-      currentShowAll = false;
-      renderRoutes(from, to);
-    };
-    routesList.appendChild(hideBtn);
-  }
-
-  // Render rejected routes in greyed format
-  if (currentRejected && currentRejected.length > 0) {
-    const rejectedSection = document.createElement("div");
-    rejectedSection.className = "rejected-routes-section";
-    rejectedSection.innerHTML = "<h4>🚫 Evaluated but not recommended:</h4>";
-
-    const rejectedList = document.createElement("div");
-    rejectedList.className = "rejected-routes-list";
-
-    currentRejected.forEach((item) => {
-      const rejectedCard = document.createElement("div");
-      rejectedCard.className = "rejected-route-card";
-      rejectedCard.innerHTML = `
-        <div class="rejected-route-text">
-          <strong>${item.city}</strong>
-          <span class="rejection-reason">${item.reason}</span>
-        </div>
-      `;
-      rejectedList.appendChild(rejectedCard);
-    });
-
-    rejectedSection.appendChild(rejectedList);
-    routesList.appendChild(rejectedSection);
-  }
-}
-
-// ============================================
-// MAP VISUALIZATION
-// ============================================
-
-function clearMap() {
-  Object.values(markers).forEach((marker) => {
-    if (map.hasLayer(marker)) map.removeLayer(marker);
-  });
-  markers = {};
-
-  Object.values(polylines).forEach((polyline) => {
-    if (map.hasLayer(polyline)) map.removeLayer(polyline);
-  });
-  polylines = {};
-}
-
-function drawMap(from, to, routes) {
-  clearMap();
-
-  const fromCoords = locationCoords[from] || [22.9734, 78.6569];
-  const toCoords = locationCoords[to] || [22.9734, 78.6569];
-
-  // Add markers
-  const fromMarker = L.marker(fromCoords, {
-    title: from,
-    icon: L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-      shadowUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-    }),
-  })
-    .addTo(map)
-    .bindPopup(`📍 <strong>${from}</strong><br>Source`);
-
-  const toMarker = L.marker(toCoords, {
-    title: to,
-    icon: L.icon({
-      iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-      shadowUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-    }),
-  })
-    .addTo(map)
-    .bindPopup(`📍 <strong>${to}</strong><br>Destination`);
-
-  // Find cheapest (support total_price or price)
-  const cheapest = routes.reduce((min, route) => {
-    const p = route.total_price ?? route.price ?? Number.MAX_SAFE_INTEGER;
-    const mp = min.total_price ?? min.price ?? Number.MAX_SAFE_INTEGER;
-    return p < mp ? route : min;
-  });
-
-  if (cheapest.type === "FLIGHT") {
-    L.polyline([fromCoords, toCoords], {
-      color: "#fdd835",
-      weight: 4,
-      opacity: 0.9,
-    })
-      .addTo(map)
-      .bindPopup(
-        `✈️ <strong>Flight</strong><br>₹${cheapest.price.toLocaleString("en-IN")}`
-      );
-  } else if (cheapest.type === "TRAIN") {
-    L.polyline([fromCoords, toCoords], {
-      color: "#2ecc71",
-      weight: 4,
-      opacity: 0.9,
-      dashArray: "10, 5",
-    })
-      .addTo(map)
-      .bindPopup(
-        `🚂 <strong>Train</strong><br>₹${cheapest.price.toLocaleString("en-IN")}`
-      );
-  } else if (cheapest.type === "MIXED" && cheapest.hub) {
-    const hubCoords = locationCoords[cheapest.hub] || fromCoords;
-
-    // Flight leg
-    L.polyline([fromCoords, hubCoords], {
-      color: "#e74c3c",
-      weight: 3,
-      opacity: 0.8,
-    })
-      .addTo(map)
-      .bindPopup(`✈️ Flight to ${cheapest.hub}`);
-
-    // Train leg
-    L.polyline([hubCoords, toCoords], {
-      color: "#3498db",
-      weight: 3,
-      opacity: 0.8,
-      dashArray: "5, 5",
-    })
-      .addTo(map)
-      .bindPopup(`🚂 Train from ${cheapest.hub}`);
-
-    // Hub marker
-    L.circleMarker(hubCoords, {
-      radius: 10,
-      fillColor: "#f39c12",
-      fillOpacity: 0.8,
-      color: "#e67e22",
-      weight: 2,
-      title: cheapest.hub,
-    })
-      .addTo(map)
-      .bindPopup(`🎯 <strong>Hub: ${cheapest.hub}</strong><br>💚 Cheapest Route`);
-  }
-
-  // Fit bounds
-  const bounds = L.latLngBounds([fromCoords, toCoords]);
-  map.fitBounds(bounds, { padding: [50, 50] });
-}
-
-// ============================================
-// KEYBOARD NAVIGATION & INITIALIZATION
-// ============================================
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("from")?.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") search();
-  });
-  document.getElementById("to")?.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") search();
-  });
-
-  // Initialize map
-  initializeMap();
-});
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);
