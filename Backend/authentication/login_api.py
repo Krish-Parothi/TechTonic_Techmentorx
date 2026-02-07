@@ -7,13 +7,13 @@ from password_utils import verify_password
 from jwt_utils import create_access_token
 from mongo_connection import users_collection
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+app = APIRouter(prefix="/auth", tags=["Auth"])
 
 # Load token expiry from .env (default 60 minutes)
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 
-@router.post("/login", response_model=TokenResponseSchema)
+@app.post("/login", response_model=TokenResponseSchema)
 def login(data: LoginSchema):
     user = users_collection.find_one({"email": data.email})
 

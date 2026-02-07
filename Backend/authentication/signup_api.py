@@ -7,10 +7,10 @@ from mongo_connection import users_collection
 from auth_schema import SignupSchema
 from password_utils import hash_password
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+app = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-@router.post("/signup")
+@app.post("/signup")
 def signup(data: SignupSchema):
     if users_collection.find_one({"email": data.email}):
         raise HTTPException(status_code=400, detail="Email already exists")
